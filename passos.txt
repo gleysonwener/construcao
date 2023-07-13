@@ -377,4 +377,5 @@ TIME_ZONE = 'America/Sao_Paulo'
 
 - fazer as migrações
 
-- 
+- inserir nome e obrenome em cadastrar_vendedor
+ -
