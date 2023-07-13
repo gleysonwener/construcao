@@ -1,0 +1,270 @@
+Projeto Construct
+
+- Instalar python
+- Instalar vs code
+- criar pasta do projeto
+- abrir novo terminal
+- criar ambiente virtual
+	phyton -m venv venv
+- ativar ambiente virtual
+	.\venv\Scripts\Activate
+- instalar o django
+	pip instlall django
+- intalar o pillow - biblioteca para imagens
+	pip install pillow
+- rodar o django admin
+	django-admin startproject construct-youtube .
+- rodar o servidor do django
+	python manage.py runserver
+- criar apps
+	python manage.py startapp usuarios
+- adcionar o app, no settings.py, na parte do instaled apps
+- importar modulo os no settings.py 
+	import os
+- configurar a pasta dos nossos templates na parte de TEMPLATES
+	'DIRS': [os.path.join(BASE_DIR, 'templates')],
+- criar models de usuarios
+	from django.contrib.auth.models import AbstractUser
+
+	class Users(AbstractUser):
+		choices_cargo = (('V', 'vendecor'),
+						('G', 'gerente'),
+						('C', 'caixa')) 
+		cargo = models.CharField(max_length=1, choices=choices_cargo)
+- criar arquivo forms.py
+	from django import forms
+	from django.contrib.auth import forms
+	from .models import Users
+
+	class UserChangeForm(Users.Userchangeform):
+		class Meta(forms.UserChangeForm.Meta):
+			models = Users
+
+	class UserCreationForm(Users.UserCreationForm):
+		class Meta(forms.UserCreationForm.Meta):
+			models = Users
+- registrar no admin.py
+	from django.contrib import admin
+	from .models import Users
+	from django.contrib.auth import admin as admin_auth_django
+	from .forms import UserChangeForm, UserCreationForm
+
+	@admin.register
+	class UsersAdmin(admin_auth_django.UserAdmin):
+		form = UserChangeForm
+		add_form = UserCreationForm
+		model = Users
+		fieldsets = admin_auth_django.UserAdmin.fieldsets + (
+        	('Cargo', {'fields':('cargo',)}),
+    	)
+- python manage.py runserver
+- inseir no settings.py
+	# config_auth
+	AUTH_USER_MODEL = 'usuarios.Users'
+- rodar as migrações
+	python manage.py makemigrations
+	python manage.py migrate
+- criar superusuario do django admin
+	python manage.py createsuperuser
+- instalar nova biblioteca
+	pip install django-role-permissions
+- adcionar no installed_apps
+	'rolepermissions'
+- criar novo arquivo dentro de construct_youtube com o nome roles.py
+	from rolepermissions.roles import AbstractUserRole
+
+	class Gerente(AbstractUserRole):
+		available_permissions = {
+			'cadastrar_produtos' : True,
+			'liberar_descontos' : True,
+			'cadastrar_vendedor' : True,
+		}
+
+	
+	class Vendedor(AbstractUserRole):
+		available_permissions = {
+			'realizar_venda' : True,
+		}
+
+- adcionar no settings
+	# role permissions
+	ROLEPERMISSIONS_MODULE = 'construct_youtube.roles'
+
+- adicionar o include no urls.py e tbm usuarios.urls para redirecionar para a url do app de usaurios
+	path('auth/', include('usuarios.urls')),
+
+- dentro da app usuaros, criar o arquivo 'urls.py'
+	from django.urls import path
+	from . import views
+	urlpatterns = [
+		path('cadastrar_vendedor/', views.cadastrar_vendedor, name='cadastrar_vendedor'),
+	]
+- na views da ap usuario
+	from django.shortcuts import render, HttpResponse
+	from rolepermissions.decorators import has_permission_decorator
+
+	@has_permission_decorator('cadastrar_vendedor')
+	def cadastrar_vendedor(request):
+		return HttpResponse('Teste')
+- criar pasta templates na raiz do projeto, mesmo nível das apps
+- criar arquivo base.html dentro de templates
+- acessar bootstrap, mudar a versão para 4.6 e copiar a start template
+- dentro de base.html
+		<!doctype html>
+		<html lang="pt-BR">
+		<head>
+			<!-- Required meta tags -->
+			<meta charset="utf-8">
+			<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+			<!-- Bootstrap CSS -->
+			<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
+			{% block 'head' %}
+			
+			{% endblock %}
+			<title>{% block 'title' %}{% endblock %}</title>
+		</head>
+		<body>
+			{% block 'body' %}
+			
+			{% endblock %}
+
+			<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+			<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-Fy6S3B9q64WdZWQUiU+q4/2Lc9npb8tCaSX9FK7E8HnRr0Jz8D6OP9dO5Vg3Q9ct" crossorigin="anonymous"></script>
+
+		</body>
+		</html>
+
+- criar arquivo templates dentro da app usuarios
+- criar arquivo cadastrar_vendedor.html dentro da pasta ususarios/templates
+	{% extends 'base.html' %}
+
+	{% block 'body' %}
+		testando
+	{% endblock %}
+
+-mudar a views para reinderizar o html:
+	from django.shortcuts import render, HttpResponse
+	from rolepermissions.decorators import has_permission_decorator
+
+	@has_permission_decorator('cadastrar_vendedor')
+	def cadastrar_vendedor(request):
+		return render(request, 'cadastrar_vendedor.html')
+
+- alterar o arquivo cadastrar_vendedor.html - criando o formulario de cadastro de Vendedor
+		{% extends 'base.html' %}
+
+		{% block 'body' %}
+			<div class="container">
+				<form action="" method="POST">
+					{% csrf_token %}
+					<br>
+					<label>E-mail</label>
+					<input type="email" placeholder="Digite seu e-mail..." name="email" class="form-control">
+					<br>
+					<label>Senha</label>
+					<input type="password" placeholder="Digite sua senha..." name="senha" class="form-control">
+					<br>
+					<input type="submit" class="btn btn-success">
+				</form>
+			</div>
+		{% endblock %}
+
+- adcionar a name da urls de usuarios na action do formulario: action='cadastrar_vendedor'
+	para fazer a gravação dos dados
+
+- inserir o action do formulario de cadastro de vendedores
+	<form action={% url 'cadastrar_vendedor' %} method="POST">
+
+- como o method do formulário é postentao fazer essas alterações na views de usuarios, para processar os dados
+		from django.shortcuts import render, HttpResponse
+		from rolepermissions.decorators import has_permission_decorator
+		from . models import Users
+
+		@has_permission_decorator('cadastrar_vendedor')
+		def cadastrar_vendedor(request):
+			if request.method == 'GET':
+				return render(request, 'cadastrar_vendedor.html')
+			if request.method == 'POST':
+				email = request.POST.get('email') #captura o que foi digitado no input da página
+				senha = request.POST.get('senha')
+
+				user = Users.objects.filter(email=email)
+
+				if user.exists(): # se existe algum dado nessa variavel
+					# TODO: utilizar messages do django
+					return HttpResponse('Email já existe')
+				
+				#cria o usuario e atribui o username ao email, para fazer autenticação pelo username 
+				user = Users.objects.create_user(username=email, email=email, password=senha, cargo='V') 
+
+				# TODO: Redirecionar com uma mensagem
+				return HttpResponse('Conta criada com sucesso')
+
+- criar um arqivo siginals.py na app usuarios # para mandar sinal para verificar as permissões
+	from django.dispatch import receiver
+	from django.db.models.signals import post_save
+	from .models import Users
+	from rolepermissions.roles import assign_role #vai verificar a classe de permissaõ para o usuario
+
+	@receiver(post_save, sender=Users)
+	def define_permissoes(sender, instance, created, **kwargs):
+		if created:
+			if instance.cargo == 'V':
+				assign_role(instance, 'vendedor')
+			elif instance.cargo == 'G':
+				assign_role(instance, 'gerente')
+
+- iportar o signals dentro do app
+	 def ready(self):
+        import usuarios.signals
+
+- criar def login
+	def login(request):
+		pass # por enquanto
+
+- adcionar login as urls
+	path('login/', views.login, name="login"),
+
+importar redirect e reverse
+	from django.shortcuts import redirect #redireciona a pagina
+	from django.urls import reverse # reverte o caminho da pagina para a name da urls
+
+- adicionar a função login
+	if request.method == 'GET':
+        if request.user.is_authenticated:
+            return redirect(reverse('login'))
+		return render(request, 'login.html')
+
+- criar o arquivo login.html dentro de usuarios/templates
+	copiar o mesmo html de cadastrar_vendedor.html e mudar a action para login
+- importar na view
+	from django.contrib import auth
+
+- alterar a função login
+	def login(request):
+    if request.method == 'GET':
+        if request.user.is_authenticated:
+            return redirect(reverse('login'))
+        return render(request, 'login.html')
+    elif request.method == 'POST':
+        login = request.POST.get('email')
+        senha = request.POST.get('senha')
+
+        user = auth.authenticate(username=login, password=senha)
+
+        #se o usuário não existir
+        if not user:
+            # TODO: Redirecionar com mensagem de erro
+            return HttpResponse('Usuário inválido')
+
+        #se o usuario existir fazer o login
+        auth.login(request, user)
+        return HttpResponse('Usuário logado com sucesso')
+
+- criar a url sair
+	path('sair/', views.logout, name='sair'),
+- criar a função logout
+	def logout(request):
+    request.session.flush()
+    return redirect(reverse('login'))
