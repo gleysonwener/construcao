@@ -4,11 +4,14 @@ from . models import Users
 from django.shortcuts import redirect #redireciona a pagina
 from django.urls import reverse # reverte o caminho da pagina para a name da urls
 from django.contrib import auth
+from django.shortcuts import get_object_or_404
+from django.contrib import messages
 
 @has_permission_decorator('cadastrar_vendedor')
 def cadastrar_vendedor(request):
     if request.method == 'GET':
-        return render(request, 'cadastrar_vendedor.html')
+        vendedores = Users.objects.filter(cargo="V")
+        return render(request, 'cadastrar_vendedor.html', {'vendedores': vendedores})
     if request.method == 'POST':
         email = request.POST.get('email') #captura o que foi digitado no input da página
         senha = request.POST.get('senha')
@@ -28,7 +31,7 @@ def cadastrar_vendedor(request):
 def login(request):
     if request.method == 'GET':
         if request.user.is_authenticated:
-            return redirect(reverse('plataforma'))
+            return redirect(reverse('plataforma')) 
         return render(request, 'login.html')
     elif request.method == 'POST':
         login = request.POST.get('email')
@@ -48,3 +51,10 @@ def login(request):
 def logout(request):
     request.session.flush()
     return redirect(reverse('login'))
+
+@has_permission_decorator('cadastrar_vendedor')
+def excluir_usuario(request, id): # esse é o id passado na url
+    vendedor = get_object_or_404(Users, id=id) # tabela que vai procurar Users e bucar o ususario pelo id que é igual ao id da url
+    vendedor.delete()
+    messages.add_message(request, messages.SUCCESS, 'Vendedor excluído com sucesso.')
+    return redirect(reverse('cadastrar_vendedor'))

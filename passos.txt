@@ -198,6 +198,9 @@ Projeto Construct
 				#cria o usuario e atribui o username ao email, para fazer autenticação pelo username 
 				user = Users.objects.create_user(username=email, email=email, password=senha, cargo='V') 
 
+				# se quiser que o vendedor seja super usuario add
+				# user = Users.objects.create_user(username=email, email=email, password=senha, cargo='V', is_superuser=True) 
+
 				# TODO: Redirecionar com uma mensagem
 				return HttpResponse('Conta criada com sucesso')
 
@@ -268,3 +271,110 @@ importar redirect e reverse
 	def logout(request):
     request.session.flush()
     return redirect(reverse('login'))
+
+- adicionar estáticos
+STATICFILES_DIRS = (os.path.join(BASE_DIR, 'templates/static'),) # procura na pasta localmente
+STATIC_ROOT = os.path.join('static') # manda para a pasta remotamente
+
+-  adcionar arquivos de mídia
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media') pasta qual vai armazenar os arquivos de media enviado pelo usuario
+MEDIA_URL = '/media/'  # url acessada para os arquivos de midia
+
+- criar pasta static dentro de templates para armazenar os arquivs estáticos
+- criar arquivo css.css dentro da pasta css
+	.fundo{
+    background-color: #121212;
+    color: white;
+	}
+- inserir os statics {% load statics %} na primeria linha do arquivo base.html
+- importar os arquivos css no base.html
+	<link rel="stulesheet" href="{% static 'usuarios/css/css.css' %}">
+- importar as bibliotecas dos statics e concatenar os estáticos na urls.py raiz
+from django.conf import settings
+from django.conf.urls.static import static
+
++ static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+- inserir <body class="fundo"> no body do base.html
+- adicionar navbar do bootstrap no body
+- alterar o backgroud da nav no css
+- criar um hr lá depois do form de cadastrar vendedor
+	<hr class="bg-hr">
+- listar usuarios que sejam vendedores
+- inserir uma table bootstrap
+- alterar o cabeçalho das colunas a serem exibidas
+- fazer o laço de repetição nas linhas da tabela "o for"
+	primeiro selecionar todos os vendedores la na views de usuarios na função de cadastrar_vendedores:
+		vendedores = Users.objects.filter(cargo='V')
+            return render(request, 'cadastrar_vendedor.html', {'vendedores': vendedores})
+	segundo: fazer a iteração no html
+		 {% for vendedor in vendedores %}
+                <tr>
+                    <th scope="row">{{ vendedor.first_name }}</th>
+                    <td>{{ vendedor.last_name }}</td>
+                    <td>{{ vendedor.email }}</td>
+                    <td>{{ vendedor.last_login }}</td>
+					
+                </tr>
+            {% endfor %}
+- inserir o botão de excluir <td><a class="btn btn-danger">EXCLUIR</a></td>
+	<td><a href="{% url 'excluir_usuario' vendedor.id %}" class="btn btn-danger">EXCLUIR</a></td>
+- criar url que chama a função para excluir o usuario
+	path('excluir_usuario/<str:id>/', views.excluir_usuario, name='excluir_usuario')
+- criar a função para excluir o usuario em views
+	@has_permission_decorator('cadastrar_vendedor')
+	def excluir_usuario(request, id):
+		vendedor = get_object_or_404(User, id=id)
+		vendedor.delete()
+		return redirect(reverse('cadastrar_vendedor'))
+- importar a biblioteca: from django.shortcuts import get_object_or_404
+
+- importar o app de messages do django la no settings
+	from django.contrib.messages import constants
+- add as messages no settings
+	
+# Messages
+
+MESSAGE_TAGS = {
+    constants.DEBUG: 'alert-primary',
+    constants.ERROR: 'alert-danger',
+    constants.SUCCESS: 'alert-success',
+    constants.INFO: 'alert-info',
+    constants.WARNING: 'alert-warning',
+}
+
+- importar messages nas views	from django.contrib import messages
+- adcionar messages na função de excluiro usuario
+	messages.add_message(request, messages.SUCCESS, 'Vendedor excluído com sucesso.')
+- fazer a verificação se há mensagens
+	{% if messages %}
+            <br>
+            {% for message in messages %}
+                <div class="alert {{message.tags}}">{{message}}</div>
+            {% endfor %}
+    {% endif %}
+- fazer verificação se o usuario ja realizou um login, la td co html de cadastrar_vendedor
+	{% if not vendedor.last_login %}
+        Primeiro acesso
+	{% else %}
+        {{ vendedor.last_login }}
+    {% endif %}
+
+- alterar a linguagem e o timezone no settings
+LANGUAGE_CODE = 'pt-BR'
+
+TIME_ZONE = 'America/Sao_Paulo'
+
+---------------------------
+
+- criar app estoque 
+	python manage.py startapp estoque
+- registrar o app estoque no settings
+
+- criar models de estoque
+	
+- importar os models la no admin de estoque
+
+- fazer as migrações
+
+- 
