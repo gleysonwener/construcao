@@ -9,7 +9,10 @@ import sys
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.contrib import messages
+from rolepermissions.decorators import has_permission_decorator
+from .forms import ProdutoForm
 
+@has_permission_decorator('cadastrar_produtos')
 def add_produto(request):
     if request.method == "GET":
         categorias = Categoria.objects.all() #captura todas as categorias
@@ -55,3 +58,13 @@ def add_produto(request):
         messages.add_message(request, messages.SUCCESS, 'Produto cadastrado comsucesso.')
         # reverse espera o name da url
         return redirect(reverse('add_produto'))
+
+def produto(request, slug):
+    if request.method == 'GET':
+        produto = Produto.objects.get(slug=slug)
+        #print(produto.__dict__)
+        #form = ProdutoForm(initial={'nome': produto.nome})
+        data = produto.__dict__
+        data['categoria'] = produto.categoria.id # cria a posição data de categoria para mostrar no formulário
+        form = ProdutoForm(initial=data)
+        return render(request, 'produto.html', {'form' : form})
