@@ -6,11 +6,16 @@ from datetime import date
 from io import BytesIO
 from django.core.files.uploadedfile import InMemoryUploadedFile
 import sys
+from django.shortcuts import redirect
+from django.urls import reverse
+from django.contrib import messages
 
 def add_produto(request):
     if request.method == "GET":
         categorias = Categoria.objects.all() #captura todas as categorias
-        return render(request, 'add_produto.html', {'categorias': categorias})
+        produtos = Produto.objects.all() # captura todos os produtos
+        # reinderizando no html
+        return render(request, 'add_produto.html', {'categorias': categorias, 'produtos': produtos}) # context de categorias e produtos
     elif request.method == "POST":
         #pegando todos os dados digitados pelo usuario
         nome = request.POST.get('nome')
@@ -46,4 +51,7 @@ def add_produto(request):
 
             img_dj = Imagem(imagem = img_final, produto=produto)
             img_dj.save()
-        return HttpResponse('foi')
+        #adcionando messages
+        messages.add_message(request, messages.SUCCESS, 'Produto cadastrado comsucesso.')
+        # reverse espera o name da url
+        return redirect(reverse('add_produto'))
